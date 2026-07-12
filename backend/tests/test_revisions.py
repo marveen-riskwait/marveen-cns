@@ -47,3 +47,16 @@ def test_restore_revision(admin):
 def test_restore_unknown_revision_404(admin):
     page = _new_page(admin, slug="rev-404")
     assert admin.post(f"/api/pages/{page['id']}/revisions/99999/restore").status_code == 404
+
+
+def test_purging_page_removes_its_revisions(admin, db):
+    from app.models.page_revision import PageRevision
+
+    page = _new_page(admin, slug="rev-purge")
+    pid = page["id"]
+    admin.patch(f"/api/pages/{pid}", json={"title": "changed"})
+    assert PageRevision.query.filter_by(page_id=pid).count() == 1
+
+    admin.delete(f"/api/pages/{pid}")            # soft delete (trash)
+    admin.delete(f"/api/pages/{pid}/purge")      # permanent
+    assert PageRevision.query.filter_by(page_id=pid).count() == 0

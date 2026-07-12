@@ -8,12 +8,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { resource, errMsg } from "../api/client";
+import { PagesAPI, resource, errMsg } from "../api/client";
 import { FieldInput, LabelledField } from "../components/FieldInput";
 import { BLOCK_ORDER, BLOCK_TYPES, blockSummary, makeBlock } from "../config/blocks";
 import { useToast } from "../contexts/ToastContext";
 
 const api = resource("pages");
+const WEB_URL = import.meta.env.VITE_WEB_URL || "http://localhost:3000";
 
 let _uidSeq = 0;
 const withUid = (block) => ({ ...block, _uid: block._uid || `b${Date.now()}_${_uidSeq++}` });
@@ -123,6 +124,68 @@ function AddBlock({ onAdd }) {
   );
 }
 
+// ── Revision history panel ──────────────────────────────────────────
+function HistoryPanel({ pageId, onRestored }) {
+  const { push } = useToast();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    PagesAPI.revisions(pageId, { per_page: 50 })
+      .then((d) => setItems(d.items || []))
+      .catch((err) => push(errMsg(err, "Historique indisponible"), "error"))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [pageId]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const restore = async (rev) => {
+    if (!window.confirm(`Restaurer la version #${rev.number} ?`)) return;
+    setBusy(rev.id);
+    try {
+      await PagesAPI.restoreRevision(pageId, rev.id);
+      push(`Version #${rev.number} restaurée`);
+      onRestored();
+      load();
+    } catch (err) {
+      push(errMsg(err, "Restauration impossible"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (loading) return <div className="text-secondary py-4"><span className="spinner-border spinner-border-sm me-2" />Chargement…</div>;
+  if (items.length === 0) return <div className="text-secondary py-4">Aucune version enregistrée pour le moment.</div>;
+
+  return (
+    <div className="card border-0 shadow-sm"><div className="table-responsive">
+      <table className="table table-hover align-middle mb-0">
+        <thead className="table-light"><tr>
+          <th>Version</th><th>Auteur</th><th>Date</th><th>Titre</th>
+          <th className="text-end">Actions</th>
+        </tr></thead>
+        <tbody>
+          {items.map((r) => (
+            <tr key={r.id}>
+              <td>#{r.number}</td>
+              <td className="text-secondary">{r.author_name || "—"}</td>
+              <td className="text-secondary small">{new Date(r.snapshot_at || r.created_at).toLocaleString("fr-FR")}</td>
+              <td>{r.title}</td>
+              <td className="text-end">
+                <button className="btn btn-outline-secondary btn-sm" disabled={busy === r.id}
+                        onClick={() => restore(r)}>
+                  <i className="bi bi-arrow-counterclockwise me-1" />Restaurer
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div></div>
+  );
+}
+
 export function PageBuilder() {
   const { id } = useParams();
   const isNew = !id;
@@ -134,9 +197,32 @@ export function PageBuilder() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("content");
   const [saveState, setSaveState] = useState("saved"); // saved | dirty | saving | error
+  const [previewOn, setPreviewOn] = useState(false);
+  const [previewToken, setPreviewToken] = useState(null);
+  const [previewKey, setPreviewKey] = useState(0);
   const hydratedRef = useRef(false);
   const timerRef = useRef(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const reload = () => {
+    hydratedRef.current = false;
+    api.get(id).then((data) => {
+      setPage({ ...EMPTY, ...data, seo: data.seo || {}, blocks: (data.blocks || []).map(withUid) });
+      setTimeout(() => { hydratedRef.current = true; }, 0);
+    });
+  };
+
+  // Mint a preview token when the preview pane opens.
+  useEffect(() => {
+    if (previewOn && !previewToken && !isNew) {
+      PagesAPI.previewToken(id).then((d) => setPreviewToken(d.token)).catch(() => {});
+    }
+  }, [previewOn, previewToken, isNew, id]);
+
+  // Refresh the preview iframe after each successful save.
+  useEffect(() => {
+    if (previewOn && saveState === "saved") setPreviewKey((k) => k + 1);
+  }, [saveState, previewOn]);
 
   useEffect(() => {
     if (isNew) { hydratedRef.current = true; setPage(EMPTY); setLoading(false); return; }
@@ -248,6 +334,12 @@ export function PageBuilder() {
               {saveState === "error" && <span className="text-danger"><i className="bi bi-exclamation-triangle me-1" />Échec</span>}
             </span>
           )}
+          {!isNew && (
+            <button className={"btn btn-sm " + (previewOn ? "btn-secondary" : "btn-outline-secondary")}
+                    onClick={() => setPreviewOn((v) => !v)} title="Aperçu en direct">
+              <i className="bi bi-layout-split me-1" />Aperçu
+            </button>
+          )}
           <button className="btn btn-primary btn-sm" onClick={save} disabled={busy || !page.title}>
             <i className="bi bi-check-lg me-1" /> {busy ? "…" : "Enregistrer"}
           </button>
@@ -255,13 +347,16 @@ export function PageBuilder() {
       </div>
 
       <ul className="nav nav-tabs mb-3">
-        {[["content", "Contenu"], ["settings", "Réglages"], ["seo", "SEO"]].map(([k, l]) => (
+        {[["content", "Contenu"], ["settings", "Réglages"], ["seo", "SEO"],
+          ...(isNew ? [] : [["history", "Historique"]])].map(([k, l]) => (
           <li className="nav-item" key={k}>
             <button className={`nav-link ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>{l}</button>
           </li>
         ))}
       </ul>
 
+      <div className={"mv-editor-layout" + (previewOn ? " mv-editor-layout--split" : "")}>
+      <div className="mv-editor-main">
       {tab === "content" && (
         <div>
           {page.blocks.length === 0 && (
@@ -278,6 +373,10 @@ export function PageBuilder() {
           </DndContext>
           <AddBlock onAdd={addBlock} />
         </div>
+      )}
+
+      {tab === "history" && !isNew && (
+        <HistoryPanel pageId={id} onRestored={reload} />
       )}
 
       {tab === "settings" && (
@@ -307,6 +406,32 @@ export function PageBuilder() {
           ))}
         </div></div>
       )}
+      </div>
+
+      {previewOn && !isNew && (
+        <aside className="mv-editor-preview">
+          <div className="d-flex align-items-center justify-content-between mb-2">
+            <span className="small fw-medium text-secondary"><i className="bi bi-eye me-1" />Aperçu en direct</span>
+            <div className="btn-group btn-group-sm">
+              <button className="btn btn-outline-secondary" onClick={() => setPreviewKey((k) => k + 1)} title="Rafraîchir">
+                <i className="bi bi-arrow-clockwise" />
+              </button>
+              {previewToken && (
+                <a className="btn btn-outline-secondary" title="Ouvrir dans un onglet" target="_blank" rel="noreferrer"
+                   href={`${WEB_URL}/preview?token=${previewToken}`}><i className="bi bi-box-arrow-up-right" /></a>
+              )}
+            </div>
+          </div>
+          {previewToken ? (
+            <iframe key={previewKey} title="Aperçu"
+                    src={`${WEB_URL}/preview?token=${previewToken}&_=${previewKey}`}
+                    className="mv-preview-frame" />
+          ) : (
+            <div className="text-secondary small p-3">Préparation de l’aperçu…</div>
+          )}
+        </aside>
+      )}
+      </div>
     </div>
   );
 }

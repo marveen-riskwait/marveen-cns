@@ -64,6 +64,14 @@ export const SettingsAPI = {
     api.put(`/settings/${key}`, { value, group, is_public }).then((r) => r.data.data),
 };
 
+// Page-specific actions: draft preview token + revision history.
+export const PagesAPI = {
+  previewToken: (id) => api.get(`/pages/${id}/preview`).then((r) => r.data.data),
+  revisions: (id, params) => api.get(`/pages/${id}/revisions`, { params }).then((r) => r.data),
+  restoreRevision: (id, rid) =>
+    api.post(`/pages/${id}/revisions/${rid}/restore`).then((r) => r.data.data),
+};
+
 // Roles listing (read-only) for the user editor's role picker.
 export const RolesAPI = {
   list: () => api.get("/roles").then((r) => r.data.data),
