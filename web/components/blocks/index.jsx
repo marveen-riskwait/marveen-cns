@@ -1,0 +1,117 @@
+import { mediaUrl } from "../../lib/api";
+
+// Block renderer — maps a stored block `type` to a component. Mirrors the admin
+// block registry (frontend/src/config/blocks.js) and the backend allow-list.
+
+function Hero({ data }) {
+  const bg = mediaUrl(data.image);
+  return (
+    <section className="blk-hero" style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+      <div className="blk-hero__overlay" />
+      <div className="blk-hero__content container">
+        {data.title && <h1>{data.title}</h1>}
+        {data.subtitle && <p className="blk-hero__sub">{data.subtitle}</p>}
+        {data.cta_label && data.cta_url && (
+          <a className="btn" href={data.cta_url}>{data.cta_label}</a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Text({ data }) {
+  return (
+    <section className="blk container">
+      <div className="blk-text" dangerouslySetInnerHTML={{ __html: data.html || "" }} />
+    </section>
+  );
+}
+
+function ImageBlock({ data }) {
+  if (!data.src) return null;
+  return (
+    <figure className="blk container">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="blk-img" src={mediaUrl(data.src)} alt={data.alt || ""} loading="lazy" />
+      {data.caption && <figcaption className="blk-caption">{data.caption}</figcaption>}
+    </figure>
+  );
+}
+
+function Gallery({ data }) {
+  const images = Array.isArray(data.images) ? data.images : [];
+  if (images.length === 0) return null;
+  return (
+    <section className="blk container">
+      <div className="blk-gallery">
+        {images.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src={mediaUrl(src)} alt="" loading="lazy" />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Quote({ data }) {
+  return (
+    <section className="blk container">
+      <blockquote className="blk-quote">
+        <p>{data.text}</p>
+        {data.author && <cite>— {data.author}</cite>}
+      </blockquote>
+    </section>
+  );
+}
+
+function Cta({ data }) {
+  if (!data.label || !data.url) return null;
+  return (
+    <section className="blk container blk-cta">
+      <a className={`btn btn--${data.style || "primary"}`} href={data.url}>{data.label}</a>
+    </section>
+  );
+}
+
+function Video({ data }) {
+  if (!data.url) return null;
+  if (data.provider === "youtube" || data.provider === "vimeo") {
+    return (
+      <section className="blk container">
+        <div className="blk-embed">
+          <iframe src={data.url} title="video" allowFullScreen frameBorder="0" />
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="blk container">
+      <video className="blk-video" src={mediaUrl(data.url)} controls />
+    </section>
+  );
+}
+
+function Html({ data }) {
+  return (
+    <section className="blk container">
+      <div dangerouslySetInnerHTML={{ __html: data.html || "" }} />
+    </section>
+  );
+}
+
+const REGISTRY = {
+  hero: Hero, text: Text, image: ImageBlock, gallery: Gallery,
+  quote: Quote, cta: Cta, video: Video, html: Html,
+};
+
+export function Blocks({ blocks }) {
+  const list = Array.isArray(blocks) ? blocks : [];
+  return (
+    <>
+      {list.map((block, i) => {
+        const Comp = REGISTRY[block.type];
+        return Comp ? <Comp key={i} data={block.data || {}} /> : null;
+      })}
+    </>
+  );
+}

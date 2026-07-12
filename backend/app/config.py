@@ -90,6 +90,9 @@ class Config:
     PAGINATION_DEFAULT: int = 20
     PAGINATION_MAX: int = 100
 
+    # ── Draft preview links (signed, expiring) ──────────────────────
+    PREVIEW_TOKEN_TTL: int = int(os.getenv("PREVIEW_TOKEN_TTL", "3600"))
+
     # ── i18n ────────────────────────────────────────────────────────
     DEFAULT_LOCALE: str = os.getenv("DEFAULT_LOCALE", "fr")
     SUPPORTED_LOCALES: list[str] = _list("SUPPORTED_LOCALES", ["fr", "en"])

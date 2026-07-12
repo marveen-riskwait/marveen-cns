@@ -10,8 +10,9 @@ from flask import Blueprint, request
 from app.models.page import Page
 from app.permissions.decorators import require_permission
 from app.schemas.page import page_schema
-from app.services import page_service
+from app.services import page_service, preview_service
 from app.services.crud_service import CRUDService
+from app.utils.errors import APIException
 from app.utils.responses import ok, paginate
 
 pages_bp = Blueprint("pages", __name__)
@@ -82,8 +83,37 @@ def purge_page(page_id):
     return ok(message="Supprimée définitivement")
 
 
+@pages_bp.get("/<int:page_id>/preview")
+@require_permission("pages.view")
+def preview_token(page_id):
+    """Mint a signed preview token (and its public path) for a page."""
+    page = _service.get_or_404(page_id)
+    token = preview_service.make_preview_token(page.id)
+    return ok({"token": token, "path": f"/api/public/preview?token={token}",
+               "slug": page.slug, "locale": page.locale})
+
+
 # ── Public (no auth) ────────────────────────────────────────────────
+@public_pages_bp.get("/home")
+def public_home():
+    locale = request.args.get("locale", "fr")
+    return ok(page_service.get_public_home(locale).to_dict())
+
+
 @public_pages_bp.get("/pages/<slug>")
 def public_page(slug):
     locale = request.args.get("locale", "fr")
     return ok(page_service.get_public_by_slug(slug, locale).to_dict())
+
+
+@public_pages_bp.get("/preview")
+def preview_page():
+    """Render any page (incl. drafts) given a valid signed preview token."""
+    token = request.args.get("token", "")
+    page_id = preview_service.read_preview_token(token)
+    if page_id is None:
+        raise APIException("Lien de prévisualisation invalide ou expiré", status_code=403)
+    page = Page.query_active().filter(Page.id == page_id).first()
+    if page is None:
+        raise APIException("Page introuvable", status_code=404)
+    return ok({**page.to_dict(), "is_preview": True})

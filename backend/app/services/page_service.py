@@ -47,3 +47,11 @@ def get_public_by_slug(slug: str, locale: str = "fr") -> Page:
     if page is None or not page.is_public():
         raise APIException("Page introuvable", status_code=404)
     return page
+
+
+def get_public_home(locale: str = "fr") -> Page:
+    """The public home page (``is_home``) for a locale."""
+    page = Page.query_active().filter(Page.is_home.is_(True), Page.locale == locale).first()
+    if page is None or not page.is_public():
+        raise APIException("Page d'accueil introuvable", status_code=404)
+    return page
