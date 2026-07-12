@@ -11,6 +11,7 @@ from flask import Flask
 
 def register_blueprints(app: Flask) -> None:
     from app.routes.auth import auth_bp
+    from app.routes.content import content_bp, content_types_bp, public_content_bp
     from app.routes.crud import build_crud_blueprint
     from app.routes.dashboard import dashboard_bp
     from app.routes.media import media_bp, media_files_bp
@@ -44,6 +45,9 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(roles_bp, url_prefix="/api/roles")
+    app.register_blueprint(content_types_bp, url_prefix="/api/content-types")
+    app.register_blueprint(content_bp, url_prefix="/api/content")
+    app.register_blueprint(public_content_bp, url_prefix="/api/public")
     app.register_blueprint(seo_bp)  # /sitemap.xml, /robots.txt at the root
 
     # ── Content modules (generic CRUD) ──────────────────────────────

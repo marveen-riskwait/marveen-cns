@@ -14,9 +14,10 @@ from app.models.user import Permission, Role, User
 CONTENT_MODULES = [
     "pages", "menus", "media", "blog", "news", "categories", "galleries",
     "faq", "partners", "brands", "team", "documents", "events",
-    "testimonials", "seo",
+    "testimonials", "seo", "content",
 ]
-ADMIN_MODULES = ["users", "roles", "settings", "logs", "trash", "backups"]
+ADMIN_MODULES = ["users", "roles", "settings", "logs", "trash", "backups",
+                 "content_types"]
 RESERVATION_MODULES = ["reservations"]
 ACTIONS = ["view", "create", "update", "delete"]
 PUBLISHABLE = {"pages", "blog", "news", "events"}

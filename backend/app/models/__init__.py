@@ -7,6 +7,8 @@ from app.models.base import BaseModel, ensure_aware, utcnow
 from app.models.article import Article
 from app.models.brand import Brand
 from app.models.category import Category
+from app.models.content_entry import ContentEntry
+from app.models.content_type import ContentType, FieldDefinition
 from app.models.document import Document
 from app.models.event import Event
 from app.models.faq import Faq
@@ -26,4 +28,5 @@ __all__ = [
     "Faq", "Partner", "Page", "PageRevision", "Media",
     "Article", "Brand", "Category", "Document", "Event",
     "TeamMember", "Testimonial",
+    "ContentType", "FieldDefinition", "ContentEntry",
 ]
