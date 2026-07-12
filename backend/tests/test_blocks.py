@@ -41,3 +41,15 @@ def test_flexible_block_passes_through():
 def test_blocks_must_be_a_list():
     with pytest.raises(ValidationError):
         validate_blocks({"type": "hero"})
+
+
+def test_text_block_html_is_sanitized():
+    cleaned = validate_blocks([{
+        "type": "text",
+        "data": {"html": '<p>ok</p><script>alert(1)</script><a href="/x" onclick="evil()">l</a>'},
+    }])
+    html = cleaned[0]["data"]["html"]
+    assert "<script>" not in html
+    assert "onclick" not in html
+    assert "<p>ok</p>" in html
+    assert '<a href="/x">l</a>' in html

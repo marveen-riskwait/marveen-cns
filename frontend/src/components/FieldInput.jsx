@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { MediaPicker } from "./MediaPicker";
+import { RichTextEditor } from "./RichTextEditor";
 
 // Single image field: URL input + thumbnail preview + "Choisir" / clear.
 export function MediaField({ value, onChange, error }) {
@@ -80,6 +81,8 @@ export function FieldInput({ f, value, onChange, error }) {
       return <MediaField value={value} onChange={onChange} error={error} />;
     case "media-list":
       return <MediaListField value={value} onChange={onChange} />;
+    case "richtext":
+      return <RichTextEditor value={value} onChange={onChange} />;
     case "textarea":
       return <textarea className={cls} rows={f.rows || 3} value={value || ""}
                        onChange={(e) => onChange(e.target.value)} />;

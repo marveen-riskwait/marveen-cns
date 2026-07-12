@@ -10,7 +10,20 @@ from __future__ import annotations
 
 from typing import Any
 
-from marshmallow import EXCLUDE, Schema, ValidationError, fields, validate
+import bleach
+from marshmallow import EXCLUDE, Schema, ValidationError, fields, post_load, validate
+
+# Safe HTML for editor-authored rich text (the "text" block). Trusted raw HTML
+# lives in the dedicated "html" block and is intentionally not sanitised here.
+_ALLOWED_TAGS = [
+    "p", "br", "strong", "em", "u", "s", "a", "ul", "ol", "li",
+    "h2", "h3", "blockquote", "code", "pre", "span",
+]
+_ALLOWED_ATTRS = {"a": ["href", "title", "target", "rel"], "span": ["class"]}
+
+
+def sanitize_html(html: str) -> str:
+    return bleach.clean(html or "", tags=_ALLOWED_TAGS, attributes=_ALLOWED_ATTRS, strip=True)
 
 # Every block type the builder recognises (spec §"Builder de pages").
 ALLOWED_TYPES: set[str] = {
@@ -35,6 +48,11 @@ class HeroBlock(_Base):
 
 class TextBlock(_Base):
     html = fields.String(required=True)
+
+    @post_load
+    def _clean(self, data, **_):
+        data["html"] = sanitize_html(data.get("html", ""))
+        return data
 
 
 class ImageBlock(_Base):

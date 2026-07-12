@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  DndContext, PointerSensor, closestCenter, useSensor, useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext, arrayMove, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { resource, errMsg } from "../api/client";
 import { FieldInput, LabelledField } from "../components/FieldInput";
@@ -7,6 +14,10 @@ import { BLOCK_ORDER, BLOCK_TYPES, blockSummary, makeBlock } from "../config/blo
 import { useToast } from "../contexts/ToastContext";
 
 const api = resource("pages");
+
+let _uidSeq = 0;
+const withUid = (block) => ({ ...block, _uid: block._uid || `b${Date.now()}_${_uidSeq++}` });
+const stripUids = (blocks) => blocks.map(({ _uid, ...b }) => b);
 
 const META_FIELDS = [
   { name: "title", label: "Titre", type: "text", required: true },
@@ -39,15 +50,24 @@ const isoToLocal = (iso) => {
 };
 const localToIso = (local) => (local ? new Date(local).toISOString() : null);
 
-// ── One block card ──────────────────────────────────────────────────
-function BlockCard({ index, block, count, onChange, onMove, onRemove }) {
+// ── One sortable block card ─────────────────────────────────────────
+function BlockCard({ block, index, count, onChange, onMove, onRemove }) {
   const [open, setOpen] = useState(true);
   const def = BLOCK_TYPES[block.type];
   const setData = (name, value) => onChange({ ...block, data: { ...block.data, [name]: value } });
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: block._uid });
+  const style = { transform: CSS.Transform.toString(transform), transition,
+                  opacity: isDragging ? 0.6 : 1 };
+
   return (
-    <div className="card border-0 shadow-sm mb-2">
+    <div ref={setNodeRef} style={style} className="card border-0 shadow-sm mb-2">
       <div className="card-header bg-transparent d-flex align-items-center gap-2">
+        <button type="button" className="btn btn-sm btn-link text-secondary p-0 mv-drag"
+                title="Glisser pour réordonner" {...attributes} {...listeners}>
+          <i className="bi bi-grip-vertical" />
+        </button>
         <i className={`bi ${def.icon} text-secondary`} />
         <button type="button" className="btn btn-link p-0 text-start flex-grow-1 text-decoration-none"
                 onClick={() => setOpen((o) => !o)}>
@@ -113,48 +133,86 @@ export function PageBuilder() {
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("content");
+  const [saveState, setSaveState] = useState("saved"); // saved | dirty | saving | error
+  const hydratedRef = useRef(false);
+  const timerRef = useRef(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
-    if (isNew) { setPage(EMPTY); setLoading(false); return; }
+    if (isNew) { hydratedRef.current = true; setPage(EMPTY); setLoading(false); return; }
     let alive = true;
     setLoading(true);
+    hydratedRef.current = false;
     api.get(id)
-      .then((data) => { if (alive) setPage({ ...EMPTY, ...data, seo: data.seo || {}, blocks: data.blocks || [] }); })
+      .then((data) => {
+        if (!alive) return;
+        setPage({ ...EMPTY, ...data, seo: data.seo || {},
+                  blocks: (data.blocks || []).map(withUid) });
+        // Skip the autosave that this state change would otherwise trigger.
+        setTimeout(() => { hydratedRef.current = true; }, 0);
+      })
       .catch((err) => push(errMsg(err, "Page introuvable"), "error"))
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [id, isNew, push]);
 
+  const buildPayload = (p) => ({
+    title: p.title, slug: p.slug, status: p.status,
+    locale: p.locale || "fr", is_home: !!p.is_home,
+    published_at: localToIso(isoToLocal(p.published_at)),
+    seo: p.seo, blocks: stripUids(p.blocks),
+  });
+
+  // Debounced auto-save for existing pages.
+  useEffect(() => {
+    if (isNew || !hydratedRef.current) return;
+    setSaveState("dirty");
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      setSaveState("saving");
+      try {
+        await api.update(id, buildPayload(page));
+        setSaveState("saved");
+      } catch {
+        setSaveState("error");
+      }
+    }, 1200);
+    return () => clearTimeout(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
   const setField = (name, value) => setPage((p) => ({ ...p, [name]: value }));
   const setSeo = (name, value) => setPage((p) => ({ ...p, seo: { ...p.seo, [name]: value } }));
 
-  const addBlock = (type) => setPage((p) => ({ ...p, blocks: [...p.blocks, makeBlock(type)] }));
+  const addBlock = (type) => setPage((p) => ({ ...p, blocks: [...p.blocks, withUid(makeBlock(type))] }));
   const updateBlock = (i, block) =>
     setPage((p) => ({ ...p, blocks: p.blocks.map((b, j) => (j === i ? block : b)) }));
   const removeBlock = (i) => setPage((p) => ({ ...p, blocks: p.blocks.filter((_, j) => j !== i) }));
   const moveBlock = (i, d) => setPage((p) => {
     const j = i + d;
     if (j < 0 || j >= p.blocks.length) return p;
-    const next = [...p.blocks];
-    [next[i], next[j]] = [next[j], next[i]];
-    return { ...p, blocks: next };
+    return { ...p, blocks: arrayMove(p.blocks, i, j) };
   });
+  const onDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    setPage((p) => {
+      const from = p.blocks.findIndex((b) => b._uid === active.id);
+      const to = p.blocks.findIndex((b) => b._uid === over.id);
+      return from < 0 || to < 0 ? p : { ...p, blocks: arrayMove(p.blocks, from, to) };
+    });
+  };
 
   const save = async () => {
     setBusy(true);
     try {
-      const payload = {
-        title: page.title, slug: page.slug, status: page.status,
-        locale: page.locale || "fr", is_home: !!page.is_home,
-        published_at: localToIso(isoToLocal(page.published_at)),
-        seo: page.seo, blocks: page.blocks,
-      };
+      const payload = buildPayload(page);
       if (isNew) {
         const created = await api.create(payload);
         push("Page créée");
         navigate(`/admin/pages/${created.id}`, { replace: true });
       } else {
         await api.update(id, payload);
+        setSaveState("saved");
         push("Page enregistrée");
       }
     } catch (err) {
@@ -181,9 +239,19 @@ export function PageBuilder() {
           </button>
           <h1 className="h4 mb-0">{isNew ? "Nouvelle page" : page.title || "Page"}</h1>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={save} disabled={busy || !page.title}>
-          <i className="bi bi-check-lg me-1" /> {busy ? "…" : "Enregistrer"}
-        </button>
+        <div className="d-flex align-items-center gap-2">
+          {!isNew && (
+            <span className="small text-secondary" aria-live="polite">
+              {saveState === "saving" && <><span className="spinner-border spinner-border-sm me-1" />Enregistrement…</>}
+              {saveState === "saved" && <><i className="bi bi-check-circle text-success me-1" />Enregistré</>}
+              {saveState === "dirty" && <><i className="bi bi-pencil me-1" />Modifié…</>}
+              {saveState === "error" && <span className="text-danger"><i className="bi bi-exclamation-triangle me-1" />Échec</span>}
+            </span>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={save} disabled={busy || !page.title}>
+            <i className="bi bi-check-lg me-1" /> {busy ? "…" : "Enregistrer"}
+          </button>
+        </div>
       </div>
 
       <ul className="nav nav-tabs mb-3">
@@ -199,10 +267,15 @@ export function PageBuilder() {
           {page.blocks.length === 0 && (
             <div className="text-center text-secondary py-4">Aucun bloc. Ajoutez-en un ci-dessous.</div>
           )}
-          {page.blocks.map((block, i) => (
-            <BlockCard key={i} index={i} block={block} count={page.blocks.length}
-                       onChange={(b) => updateBlock(i, b)} onMove={moveBlock} onRemove={removeBlock} />
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={page.blocks.map((b) => b._uid)}
+                             strategy={verticalListSortingStrategy}>
+              {page.blocks.map((block, i) => (
+                <BlockCard key={block._uid} index={i} block={block} count={page.blocks.length}
+                           onChange={(b) => updateBlock(i, b)} onMove={moveBlock} onRemove={removeBlock} />
+              ))}
+            </SortableContext>
+          </DndContext>
           <AddBlock onAdd={addBlock} />
         </div>
       )}

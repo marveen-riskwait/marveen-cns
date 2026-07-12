@@ -18,7 +18,7 @@ export const BLOCK_TYPES = {
   },
   text: {
     label: "Texte", icon: "bi-text-paragraph",
-    fields: [{ name: "html", label: "Contenu (HTML)", type: "textarea", rows: 6 }],
+    fields: [{ name: "html", label: "Contenu", type: "richtext" }],
   },
   image: {
     label: "Image", icon: "bi-image",
