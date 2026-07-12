@@ -124,6 +124,7 @@ class TestingConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     JWT_COOKIE_SECURE = False
+    RATELIMIT_ENABLED = False  # deterministic tests: no throttling on repeated login
 
 
 class ProductionConfig(Config):

@@ -1,0 +1,45 @@
+# Full local stack: Postgres + Flask API + admin SPA (nginx).
+# Usage: `docker compose up --build` then open http://localhost:8080
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: marveen
+      POSTGRES_PASSWORD: marveen
+      POSTGRES_DB: marveen_cms
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marveen -d marveen_cms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-prod-0123456789abcdef}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-jwt-0123456789abcdef}
+      JWT_COOKIE_SECURE: "false"
+      DATABASE_URL: postgresql://marveen:marveen@db:5432/marveen_cms
+      CORS_ORIGINS: http://localhost:8080
+      WEB_CONCURRENCY: "3"
+    volumes:
+      - media-data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+
+  admin:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  db-data:
+  media-data:

@@ -13,6 +13,13 @@ node_modules/
 dist/
 .vite/
 
+# Tests / coverage
+test-results/
+playwright-report/
+.coverage
+htmlcov/
+.pytest_cache/
+
 # Media & uploads (garder les dossiers, pas le contenu)
 backend/uploads/*
 backend/media/*
