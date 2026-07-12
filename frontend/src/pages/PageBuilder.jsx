@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { PagesAPI, resource, errMsg } from "../api/client";
+import { AiAPI, PagesAPI, resource, errMsg } from "../api/client";
 import { FieldInput, LabelledField } from "../components/FieldInput";
 import { BLOCK_ORDER, BLOCK_TYPES, blockSummary, makeBlock } from "../config/blocks";
 import { useToast } from "../contexts/ToastContext";
@@ -200,6 +200,8 @@ export function PageBuilder() {
   const [previewOn, setPreviewOn] = useState(false);
   const [previewToken, setPreviewToken] = useState(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [aiOn, setAiOn] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const hydratedRef = useRef(false);
   const timerRef = useRef(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -267,8 +269,25 @@ export function PageBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  useEffect(() => { AiAPI.status().then((s) => setAiOn(!!s.configured)); }, []);
+
   const setField = (name, value) => setPage((p) => ({ ...p, [name]: value }));
   const setSeo = (name, value) => setPage((p) => ({ ...p, seo: { ...p.seo, [name]: value } }));
+
+  const blocksText = () => page.blocks
+    .map((b) => Object.values(b.data || {}).filter((v) => typeof v === "string").join(" "))
+    .join(" ").replace(/<[^>]*>/g, " ").slice(0, 2000);
+
+  const genSeoDescription = async () => {
+    setAiBusy(true);
+    try {
+      const result = await AiAPI.seoDescription({ title: page.title, content: blocksText() });
+      setSeo("meta_description", result);
+      push("Description SEO générée");
+    } catch (err) {
+      push(errMsg(err, "Génération impossible"), "error");
+    } finally { setAiBusy(false); }
+  };
 
   const addBlock = (type) => setPage((p) => ({ ...p, blocks: [...p.blocks, withUid(makeBlock(type))] }));
   const updateBlock = (i, block) =>
@@ -400,6 +419,13 @@ export function PageBuilder() {
 
       {tab === "seo" && (
         <div className="card border-0 shadow-sm"><div className="card-body" style={{ maxWidth: 640 }}>
+          {aiOn && (
+            <button type="button" className="btn btn-outline-primary btn-sm mb-3"
+                    onClick={genSeoDescription} disabled={aiBusy || !page.title}>
+              {aiBusy ? <span className="spinner-border spinner-border-sm me-1" /> : <i className="bi bi-magic me-1" />}
+              Générer la description SEO
+            </button>
+          )}
           {SEO_FIELDS.map((f) => (
             <LabelledField key={f.name} f={f} value={page.seo?.[f.name]}
                            onChange={(v) => setSeo(f.name, v)} />

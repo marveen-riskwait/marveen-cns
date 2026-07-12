@@ -64,6 +64,18 @@ export const SettingsAPI = {
     api.put(`/settings/${key}`, { value, group, is_public }).then((r) => r.data.data),
 };
 
+// AI assistant. `status` is cached (one probe per session).
+let _aiStatus = null;
+export const AiAPI = {
+  status: () => {
+    if (!_aiStatus) _aiStatus = api.get("/ai/status").then((r) => r.data.data).catch(() => ({ configured: false }));
+    return _aiStatus;
+  },
+  assist: (body) => api.post("/ai/assist", body).then((r) => r.data.data.result),
+  seoDescription: (body) => api.post("/ai/seo-description", body).then((r) => r.data.data.result),
+  translate: (body) => api.post("/ai/translate", body).then((r) => r.data.data.result),
+};
+
 // Content engine: user-defined types + their entries (dynamic per type).
 export const ContentTypesAPI = {
   list: (params) => api.get("/content-types", { params }).then((r) => r.data),

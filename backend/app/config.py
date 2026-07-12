@@ -93,6 +93,13 @@ class Config:
     # ── Draft preview links (signed, expiring) ──────────────────────
     PREVIEW_TOKEN_TTL: int = int(os.getenv("PREVIEW_TOKEN_TTL", "3600"))
 
+    # ── AI (Anthropic Claude) ───────────────────────────────────────
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    AI_MODEL: str = os.getenv("AI_MODEL", "claude-sonnet-5")
+    AI_MAX_TOKENS: int = int(os.getenv("AI_MAX_TOKENS", "1024"))
+    # Demo/dev seam: return canned results instead of calling the API.
+    AI_FAKE: bool = _bool("AI_FAKE", default=False)
+
     # ── i18n ────────────────────────────────────────────────────────
     DEFAULT_LOCALE: str = os.getenv("DEFAULT_LOCALE", "fr")
     SUPPORTED_LOCALES: list[str] = _list("SUPPORTED_LOCALES", ["fr", "en"])

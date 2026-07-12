@@ -10,6 +10,7 @@ from flask import Flask
 
 
 def register_blueprints(app: Flask) -> None:
+    from app.routes.ai import ai_bp
     from app.routes.auth import auth_bp
     from app.routes.content import content_bp, content_types_bp, public_content_bp
     from app.routes.crud import build_crud_blueprint
@@ -48,6 +49,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(content_types_bp, url_prefix="/api/content-types")
     app.register_blueprint(content_bp, url_prefix="/api/content")
     app.register_blueprint(public_content_bp, url_prefix="/api/public")
+    app.register_blueprint(ai_bp, url_prefix="/api/ai")
     app.register_blueprint(seo_bp)  # /sitemap.xml, /robots.txt at the root
 
     # ── Content modules (generic CRUD) ──────────────────────────────
