@@ -96,3 +96,12 @@ a { text-decoration: none; }
 }
 .mv-picker-tile:hover { border-color: var(--mv-brand); }
 .mv-picker-tile img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Media-list field (gallery blocks) */
+.mv-media-list-item { position: relative; width: 88px; height: 88px; border-radius: 10px; overflow: hidden; background: var(--bs-tertiary-bg); }
+.mv-media-list-item img { width: 100%; height: 100%; object-fit: cover; }
+.mv-media-list-actions { position: absolute; inset: auto 0 0 0; display: flex; justify-content: center; gap: 2px; padding: 2px; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .12s ease; }
+.mv-media-list-item:hover .mv-media-list-actions { opacity: 1; }
+.mv-media-list-actions button { border: 0; background: transparent; color: #fff; font-size: .8rem; line-height: 1; padding: 2px 4px; cursor: pointer; }
+.mv-media-list-add { width: 88px; height: 88px; border: 2px dashed var(--bs-border-color); border-radius: 10px; background: transparent; color: var(--bs-secondary-color); cursor: pointer; }
+.mv-media-list-add:hover { border-color: var(--mv-brand); color: var(--mv-brand); }

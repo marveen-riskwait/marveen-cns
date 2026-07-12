@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { resource, errMsg } from "../api/client";
 import { useToast } from "../contexts/ToastContext";
-import { MediaPicker } from "./MediaPicker";
+import { LabelledField } from "./FieldInput";
 
 function toInputValue(field, value) {
   if (value == null) return field.type === "bool" ? false : "";
@@ -36,70 +36,6 @@ function toPayload(descriptor, state) {
     out[f.name] = v;
   }
   return out;
-}
-
-function MediaField({ f, value, onChange, error }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div className="input-group">
-        {value && (
-          <span className="input-group-text p-1">
-            <img src={value} alt="" style={{ height: 30, width: 30, objectFit: "cover", borderRadius: 4 }} />
-          </span>
-        )}
-        <input type="text" className={"form-control" + (error ? " is-invalid" : "")}
-               placeholder="URL de l'image" value={value}
-               onChange={(e) => onChange(e.target.value)} />
-        <button type="button" className="btn btn-outline-secondary" onClick={() => setOpen(true)}>
-          <i className="bi bi-images me-1" /> Choisir
-        </button>
-        {value && (
-          <button type="button" className="btn btn-outline-secondary" onClick={() => onChange("")}
-                  title="Retirer"><i className="bi bi-x-lg" /></button>
-        )}
-      </div>
-      {open && (
-        <MediaPicker onClose={() => setOpen(false)}
-                     onSelect={(url) => { onChange(url); setOpen(false); }} />
-      )}
-    </>
-  );
-}
-
-function Field({ f, value, onChange, error }) {
-  const cls = "form-control" + (error ? " is-invalid" : "");
-  return (
-    <div className="mb-3">
-      {f.type !== "bool" && (
-        <label className="form-label small">{f.label}{f.required && " *"}</label>
-      )}
-      {f.type === "media" ? (
-        <MediaField f={f} value={value} onChange={onChange} error={error} />
-      ) : f.type === "textarea" ? (
-        <textarea className={cls} rows="3" value={value} onChange={(e) => onChange(e.target.value)} />
-      ) : f.type === "bool" ? (
-        <div className="form-check">
-          <input className="form-check-input" type="checkbox" id={f.name}
-                 checked={!!value} onChange={(e) => onChange(e.target.checked)} />
-          <label className="form-check-label small" htmlFor={f.name}>{f.label}</label>
-        </div>
-      ) : f.type === "number" ? (
-        <input type="number" className={cls} value={value} onChange={(e) => onChange(e.target.value)} />
-      ) : f.type === "datetime" ? (
-        <input type="datetime-local" className={cls} value={value} onChange={(e) => onChange(e.target.value)} />
-      ) : f.type === "select" ? (
-        <select className={"form-select" + (error ? " is-invalid" : "")} value={value}
-                onChange={(e) => onChange(e.target.value)}>
-          {f.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-      ) : (
-        <input type="text" className={cls} value={value} onChange={(e) => onChange(e.target.value)} />
-      )}
-      {error && <div className="invalid-feedback d-block">
-        {Array.isArray(error) ? error.join(", ") : String(error)}</div>}
-    </div>
-  );
 }
 
 export function ResourceForm({ descriptor, item, onClose, onSaved }) {
@@ -143,8 +79,8 @@ export function ResourceForm({ descriptor, item, onClose, onSaved }) {
               </div>
               <div className="modal-body">
                 {descriptor.fields.map((f) => (
-                  <Field key={f.name} f={f} value={state[f.name]}
-                         onChange={(v) => set(f.name, v)} error={errors[f.name]} />
+                  <LabelledField key={f.name} f={f} value={state[f.name]}
+                                 onChange={(v) => set(f.name, v)} error={errors[f.name]} />
                 ))}
               </div>
               <div className="modal-footer">
