@@ -30,6 +30,7 @@ export const MODULE_GROUPS = [
       { label: "Paramètres", path: "/admin/settings", icon: "bi-gear", perm: "settings.view", resource: "settings" },
       { label: "Utilisateurs", path: "/admin/users", icon: "bi-shield-lock", perm: "users.view", resource: "users" },
       { label: "Intégrations", path: "/admin/integrations", icon: "bi-plugin", perm: "api_tokens.view", resource: "integrations" },
+      { label: "Corbeille", path: "/admin/trash", icon: "bi-trash", perm: "trash.view", resource: "trash" },
     ],
   },
 ];

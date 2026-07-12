@@ -14,6 +14,7 @@ import { PagesList } from "./pages/PagesList";
 import { Placeholder } from "./pages/Placeholder";
 import { ResourcePage } from "./pages/ResourcePage";
 import { Settings } from "./pages/Settings";
+import { Trash } from "./pages/Trash";
 import { Users } from "./pages/Users";
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="menus" element={<Menus />} />
         <Route path="integrations" element={<Integrations />} />
+        <Route path="trash" element={<Trash />} />
         {/* Generic CRUD screen for every declared module (see config/resources.js). */}
         <Route path=":resource" element={<ResourcePage />} />
         <Route path="*" element={<Placeholder />} />

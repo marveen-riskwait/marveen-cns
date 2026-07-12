@@ -10,7 +10,9 @@ pas le produit.
   (Flask-Migrate) · Flask-JWT-Extended (cookies httpOnly + refresh + CSRF) ·
   Marshmallow · Flask-Limiter · PostgreSQL (repli SQLite en dev) · Gunicorn
 - **Frontend admin** : React 19 · React Router 7 · Context API · Axios ·
-  Bootstrap 5.3 · Vite 6
+  Bootstrap 5.3 · Vite 6 · TipTap (WYSIWYG) · dnd-kit (drag & drop)
+- **Site public** : Next.js 14 (App Router, SSR) — dossier `web/`
+- **IA** : Claude (SDK Anthropic) — assistant de rédaction, SEO, traduction
 
 ## Architecture
 
@@ -82,6 +84,20 @@ Super-admin par défaut : `admin@marveen.cms` / `ChangeMe123!` (à changer).
 | `npm run build`   | build de production dans `frontend/dist/`          |
 | `npm run preview` | sert le build de production localement             |
 
+### 3. Site public (port 3000, optionnel)
+
+Le site vitrine SSR qui consomme l'API publique :
+
+```bash
+cd web
+npm install
+CMS_API_URL=http://localhost:3001 npm run dev    # http://localhost:3000
+```
+
+Une page publiée (avec une page `is_home`) s'affiche sur `/`, les autres par
+slug ; les brouillons sont visibles via un lien de prévisualisation signé
+(`/preview?token=…`) généré depuis l'éditeur.
+
 ### GitHub Codespaces
 
 Le proxy vise `localhost:3001` et `allowedHosts` autorise `.app.github.dev` :
@@ -105,11 +121,18 @@ ouvrir l'admin dans le navigateur.
 
 ## État des modules
 
-**Disponibles** — Auth + RBAC · Dashboard · Pages + Page Builder (blocs JSON,
+**Disponibles** — Auth + RBAC · Dashboard · **Pages + Page Builder** (blocs JSON,
+WYSIWYG TipTap, drag & drop, auto-save, historique de versions, aperçu en direct,
 SEO) · Blog · Actualités · Catégories · FAQ · Témoignages · Événements ·
-Documents · Médiathèque (WebP + miniatures) + sélecteur de média · Partenaires ·
-Marques · Équipe · Menus (arborescence) · Paramètres · Utilisateurs & rôles.
+Documents · Médiathèque (WebP + miniatures) + sélecteur · Partenaires · Marques ·
+Équipe · Menus · Paramètres · Utilisateurs & rôles · **Corbeille** ·
+**Types de contenu personnalisés** (Content-Type Builder + entrées + API auto) ·
+**Assistant IA** (rédaction / SEO / traduction) · **Intégrations** (jetons d'API
+Bearer + webhooks signés) · **Site public SSR** (Next.js) + prévisualisation signée.
 
-**À venir** — Corbeille (écran transversal ; soft-delete déjà en place) · Logs ·
-Historique · Sauvegardes · Réservations · Site public (thème RDV Cycles
-consommant l'API).
+**Tests** — 65 tests backend (pytest, ~85 %) + suite E2E Playwright, exécutés en CI
+(`.github/workflows/ci.yml`).
+
+**Pistes d'évolution** — cache Redis + CDN · GraphQL · système de plugins ·
+multi-sites (multi-tenant) · journal d'audit · sauvegardes planifiées ·
+recherche sémantique (pgvector). Voir `ROADMAP.md`.

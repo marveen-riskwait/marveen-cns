@@ -127,6 +127,10 @@ export const resource = (name) => ({
   create: (body) => api.post(`/${name}`, body).then((r) => r.data.data),
   update: (id, body) => api.patch(`/${name}/${id}`, body).then((r) => r.data.data),
   remove: (id) => api.delete(`/${name}/${id}`).then((r) => r.data),
+  // Corbeille (soft-delete) operations.
+  trash: (params) => api.get(`/${name}/trash`, { params }).then((r) => r.data),
+  restore: (id) => api.post(`/${name}/${id}/restore`).then((r) => r.data),
+  purge: (id) => api.delete(`/${name}/${id}/purge`).then((r) => r.data),
 });
 
 export const errMsg = (err, fallback = "Une erreur est survenue") =>

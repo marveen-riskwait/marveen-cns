@@ -14,5 +14,18 @@ export default defineConfig({
     },
     allowedHosts: [".app.github.dev", "localhost", "127.0.0.1"],
   },
-  build: { outDir: "dist" },
+  build: {
+    outDir: "dist",
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        // Split heavy vendors so the initial payload stays cacheable and lean.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          editor: ["@tiptap/react", "@tiptap/starter-kit", "@tiptap/extension-link"],
+          dnd: ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+        },
+      },
+    },
+  },
 });
