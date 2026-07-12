@@ -104,6 +104,16 @@ export function FieldInput({ f, value, onChange, error }) {
           {f.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       );
+    case "color":
+      return (
+        <div className="input-group" style={{ maxWidth: 220 }}>
+          <input type="color" className="form-control form-control-color"
+                 value={/^#[0-9a-fA-F]{6}$/.test(value || "") ? value : "#000000"}
+                 onChange={(e) => onChange(e.target.value)} title="Choisir une couleur" />
+          <input type="text" className={cls} placeholder="#000000" value={value || ""}
+                 onChange={(e) => onChange(e.target.value)} />
+        </div>
+      );
     default:
       return <input type="text" className={cls} value={value || ""}
                     onChange={(e) => onChange(e.target.value)} />;

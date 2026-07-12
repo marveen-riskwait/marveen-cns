@@ -9,6 +9,7 @@ import { PageBuilder } from "./pages/PageBuilder";
 import { PagesList } from "./pages/PagesList";
 import { Placeholder } from "./pages/Placeholder";
 import { ResourcePage } from "./pages/ResourcePage";
+import { Settings } from "./pages/Settings";
 import { Users } from "./pages/Users";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="pages/:id" element={<PageBuilder />} />
         <Route path="media" element={<MediaLibrary />} />
         <Route path="users" element={<Users />} />
+        <Route path="settings" element={<Settings />} />
         {/* Generic CRUD screen for every declared module (see config/resources.js). */}
         <Route path=":resource" element={<ResourcePage />} />
         <Route path="*" element={<Placeholder />} />

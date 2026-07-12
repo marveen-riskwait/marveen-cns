@@ -57,6 +57,13 @@ export const MediaAPI = {
   remove: (id) => api.delete(`/media/${id}`).then((r) => r.data),
 };
 
+// Site settings: read the whole map, upsert one key at a time.
+export const SettingsAPI = {
+  getAll: () => api.get("/settings").then((r) => r.data.data), // { items, map }
+  put: (key, value, group, is_public) =>
+    api.put(`/settings/${key}`, { value, group, is_public }).then((r) => r.data.data),
+};
+
 // Roles listing (read-only) for the user editor's role picker.
 export const RolesAPI = {
   list: () => api.get("/roles").then((r) => r.data.data),
