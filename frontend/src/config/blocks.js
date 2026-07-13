@@ -26,6 +26,8 @@ export const BLOCK_TYPES = {
       { name: "src", label: "Image", type: "media" },
       { name: "alt", label: "Texte alternatif", type: "text" },
       { name: "caption", label: "Légende", type: "text" },
+      { name: "link", label: "Lien au clic (image cliquable)", type: "link" },
+      { name: "link_new_tab", label: "Ouvrir dans un nouvel onglet", type: "bool" },
     ],
   },
   gallery: {
@@ -69,8 +71,9 @@ export const BLOCK_ORDER = ["hero", "text", "image", "gallery", "quote", "cta", 
 export function makeBlock(type) {
   const def = BLOCK_TYPES[type];
   const data = {};
-  for (const f of def.fields) data[f.name] = f.type === "media-list" ? [] : "";
-  return { type, data };
+  for (const f of def.fields)
+    data[f.name] = f.type === "media-list" ? [] : f.type === "bool" ? false : "";
+  return { type, data, active: true };
 }
 
 // Short human summary of a block, for the collapsed card header.

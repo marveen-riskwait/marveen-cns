@@ -115,6 +115,17 @@ export const PagesAPI = {
     api.post(`/pages/${id}/revisions/${rid}/restore`).then((r) => r.data.data),
 };
 
+// Cached list of pages (as link targets), refreshed once per session.
+let _linkPages = null;
+export const linkTargets = () => {
+  if (!_linkPages) {
+    _linkPages = api.get("/pages", { params: { per_page: 100 } })
+      .then((r) => (r.data.items || []).map((p) => ({ path: `/${p.slug}`, label: p.title })))
+      .catch(() => []);
+  }
+  return _linkPages;
+};
+
 // Roles listing (read-only) for the user editor's role picker.
 export const RolesAPI = {
   list: () => api.get("/roles").then((r) => r.data.data),

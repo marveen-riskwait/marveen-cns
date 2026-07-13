@@ -43,6 +43,24 @@ def test_blocks_must_be_a_list():
         validate_blocks({"type": "hero"})
 
 
+def test_block_active_flag_preserved():
+    cleaned = validate_blocks([
+        {"type": "text", "data": {"html": "<p>on</p>"}},                 # default -> active
+        {"type": "text", "data": {"html": "<p>off</p>"}, "active": False},
+    ])
+    assert cleaned[0]["active"] is True
+    assert cleaned[1]["active"] is False
+
+
+def test_image_block_accepts_link():
+    cleaned = validate_blocks([{
+        "type": "image",
+        "data": {"src": "/media/x.webp", "link": "/nos-velos", "link_new_tab": True},
+    }])
+    assert cleaned[0]["data"]["link"] == "/nos-velos"
+    assert cleaned[0]["data"]["link_new_tab"] is True
+
+
 def test_text_block_html_is_sanitized():
     cleaned = validate_blocks([{
         "type": "text",

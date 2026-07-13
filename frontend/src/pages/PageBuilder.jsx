@@ -55,7 +55,9 @@ const localToIso = (local) => (local ? new Date(local).toISOString() : null);
 function BlockCard({ block, index, count, onChange, onMove, onRemove }) {
   const [open, setOpen] = useState(true);
   const def = BLOCK_TYPES[block.type];
+  const active = block.active !== false;
   const setData = (name, value) => onChange({ ...block, data: { ...block.data, [name]: value } });
+  const toggleActive = () => onChange({ ...block, active: !active });
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: block._uid });
@@ -63,7 +65,8 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove }) {
                   opacity: isDragging ? 0.6 : 1 };
 
   return (
-    <div ref={setNodeRef} style={style} className="card border-0 shadow-sm mb-2">
+    <div ref={setNodeRef} style={style}
+         className={"card border-0 shadow-sm mb-2" + (active ? "" : " opacity-50")}>
       <div className="card-header bg-transparent d-flex align-items-center gap-2">
         <button type="button" className="btn btn-sm btn-link text-secondary p-0 mv-drag"
                 title="Glisser pour réordonner" {...attributes} {...listeners}>
@@ -73,8 +76,12 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove }) {
         <button type="button" className="btn btn-link p-0 text-start flex-grow-1 text-decoration-none"
                 onClick={() => setOpen((o) => !o)}>
           <span className="fw-medium">{def.label}</span>
+          {!active && <span className="badge text-bg-secondary ms-2">masqué</span>}
           {!open && <span className="text-secondary small ms-2 text-truncate">— {blockSummary(block)}</span>}
         </button>
+        <div className="form-check form-switch mb-0 me-1" title="Actif / masqué">
+          <input className="form-check-input" type="checkbox" checked={active} onChange={toggleActive} />
+        </div>
         <div className="btn-group btn-group-sm">
           <button type="button" className="btn btn-outline-secondary" disabled={index === 0}
                   onClick={() => onMove(index, -1)} title="Monter"><i className="bi bi-arrow-up" /></button>

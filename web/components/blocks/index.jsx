@@ -29,10 +29,14 @@ function Text({ data }) {
 
 function ImageBlock({ data }) {
   if (!data.src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  const img = <img className="blk-img" src={mediaUrl(data.src)} alt={data.alt || ""} loading="lazy" />;
   return (
     <figure className="blk container">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="blk-img" src={mediaUrl(data.src)} alt={data.alt || ""} loading="lazy" />
+      {data.link
+        ? <a href={data.link} target={data.link_new_tab ? "_blank" : undefined}
+             rel={data.link_new_tab ? "noreferrer" : undefined}>{img}</a>
+        : img}
       {data.caption && <figcaption className="blk-caption">{data.caption}</figcaption>}
     </figure>
   );
@@ -109,6 +113,7 @@ export function Blocks({ blocks }) {
   return (
     <>
       {list.map((block, i) => {
+        if (block.active === false) return null; // hidden block
         const Comp = REGISTRY[block.type];
         return Comp ? <Comp key={i} data={block.data || {}} /> : null;
       })}

@@ -1,7 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { linkTargets } from "../api/client";
 import { MediaPicker } from "./MediaPicker";
 import { RichTextEditor } from "./RichTextEditor";
+
+// Link-anywhere field: pick an internal page or type any URL. The value is a
+// plain string (path or URL); an empty value means "no link".
+function LinkField({ value, onChange }) {
+  const [pages, setPages] = useState([]);
+  useEffect(() => { linkTargets().then(setPages); }, []);
+  const isPage = pages.some((p) => p.path === value);
+  const mode = !value ? "" : isPage ? "page" : "url";
+
+  return (
+    <div className="d-flex flex-column gap-1">
+      <select className="form-select form-select-sm"
+              value={mode === "page" ? value : mode}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "" ) onChange("");
+                else if (v === "url") onChange(value && !isPage ? value : "https://");
+                else onChange(v); // a page path
+              }}>
+        <option value="">— Aucun lien —</option>
+        <optgroup label="Pages du site">
+          {pages.map((p) => <option key={p.path} value={p.path}>{p.label} ({p.path})</option>)}
+        </optgroup>
+        <option value="url">Lien externe / personnalisé…</option>
+      </select>
+      {mode === "url" && (
+        <input type="text" className="form-control form-control-sm"
+               placeholder="https://… ou /ma-page ou tel:… mailto:…"
+               value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
+    </div>
+  );
+}
 
 // Single image field: URL input + thumbnail preview + "Choisir" / clear.
 export function MediaField({ value, onChange, error }) {
@@ -83,6 +117,8 @@ export function FieldInput({ f, value, onChange, error }) {
       return <MediaListField value={value} onChange={onChange} />;
     case "richtext":
       return <RichTextEditor value={value} onChange={onChange} />;
+    case "link":
+      return <LinkField value={value} onChange={onChange} />;
     case "textarea":
       return <textarea className={cls} rows={f.rows || 3} value={value || ""}
                        onChange={(e) => onChange(e.target.value)} />;

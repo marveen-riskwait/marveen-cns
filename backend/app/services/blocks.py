@@ -59,6 +59,9 @@ class ImageBlock(_Base):
     src = fields.String(required=True)
     alt = fields.String(load_default="")
     caption = fields.String(load_default=None, allow_none=True)
+    # Turn the image into a CTA: link anywhere (internal path or external URL).
+    link = fields.String(load_default=None, allow_none=True)
+    link_new_tab = fields.Boolean(load_default=False)
 
 
 class QuoteBlock(_Base):
@@ -118,5 +121,7 @@ def validate_blocks(blocks: Any) -> list[dict]:
             except ValidationError as exc:
                 raise ValidationError({"blocks": {str(index): exc.messages}}) from exc
 
-        cleaned.append({"type": btype, "data": data})
+        # Preserve the on/off flag (default on) so a block can be hidden
+        # without being deleted; the public renderer skips inactive blocks.
+        cleaned.append({"type": btype, "data": data, "active": block.get("active", True) is not False})
     return cleaned
