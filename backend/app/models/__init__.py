@@ -18,6 +18,7 @@ from app.models.menu import Menu
 from app.models.page import Page
 from app.models.page_revision import PageRevision
 from app.models.partner import Partner
+from app.models.reservation import Reservation
 from app.models.setting import Setting
 from app.models.team_member import TeamMember
 from app.models.testimonial import Testimonial
@@ -31,5 +32,5 @@ __all__ = [
     "Article", "Brand", "Category", "Document", "Event",
     "TeamMember", "Testimonial",
     "ContentType", "FieldDefinition", "ContentEntry",
-    "ApiToken", "Webhook",
+    "ApiToken", "Webhook", "Reservation",
 ]

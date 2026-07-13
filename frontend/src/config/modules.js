@@ -12,6 +12,7 @@ export const MODULE_GROUPS = [
       { label: "Témoignages", path: "/admin/testimonials", icon: "bi-chat-quote", perm: "testimonials.view", resource: "testimonials" },
       { label: "Événements", path: "/admin/events", icon: "bi-calendar-event", perm: "events.view", resource: "events" },
       { label: "Documents", path: "/admin/documents", icon: "bi-file-earmark-pdf", perm: "documents.view", resource: "documents" },
+      { label: "Réservations", path: "/admin/reservations", icon: "bi-calendar-check", perm: "reservations.view", resource: "reservations" },
     ],
   },
   {

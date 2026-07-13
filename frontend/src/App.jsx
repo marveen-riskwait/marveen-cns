@@ -12,6 +12,7 @@ import { Menus } from "./pages/Menus";
 import { PageBuilder } from "./pages/PageBuilder";
 import { PagesList } from "./pages/PagesList";
 import { Placeholder } from "./pages/Placeholder";
+import { Reservations } from "./pages/Reservations";
 import { ResourcePage } from "./pages/ResourcePage";
 import { Settings } from "./pages/Settings";
 import { Theme } from "./pages/Theme";
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="media" element={<MediaLibrary />} />
         <Route path="content-types" element={<ContentTypes />} />
         <Route path="content/:slug" element={<ContentEntries />} />
+        <Route path="reservations" element={<Reservations />} />
         <Route path="users" element={<Users />} />
         <Route path="settings" element={<Settings />} />
         <Route path="theme" element={<Theme />} />

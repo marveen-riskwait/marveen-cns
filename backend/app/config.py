@@ -105,6 +105,15 @@ class Config:
     # Demo/dev seam: return canned results instead of calling the API.
     AI_FAKE: bool = _bool("AI_FAKE", default=False)
 
+    # ── Paiement (Stripe) ───────────────────────────────────────────
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    STRIPE_CURRENCY: str = os.getenv("STRIPE_CURRENCY", "eur")
+    # Public site base URL, for Stripe success/cancel redirects.
+    PUBLIC_SITE_URL: str = os.getenv("PUBLIC_SITE_URL", "http://localhost:3000")
+    # Demo/dev seam: simulate Stripe (no real key needed) so the flow is testable.
+    STRIPE_FAKE: bool = _bool("STRIPE_FAKE", default=False)
+
     # ── i18n ────────────────────────────────────────────────────────
     DEFAULT_LOCALE: str = os.getenv("DEFAULT_LOCALE", "fr")
     SUPPORTED_LOCALES: list[str] = _list("SUPPORTED_LOCALES", ["fr", "en"])

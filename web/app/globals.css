@@ -81,3 +81,13 @@ main { min-height: 60vh; }
 
 /* Preview banner */
 .preview-bar { background: #b45309; color: #fff; text-align: center; padding: .5rem; font-size: .9rem; font-weight: 600; }
+
+/* Reservation form */
+.resa-form { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+.resa-form label { display: flex; flex-direction: column; gap: .3rem; font-weight: 600; font-size: .95rem; }
+.resa-form input, .resa-form select { padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-weight: 400; }
+.resa-form input:focus, .resa-form select:focus { outline: 2px solid var(--brand); border-color: var(--brand); }
+.resa-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.resa-total { background: var(--bg-soft); border-radius: 10px; padding: .8rem 1rem; font-size: 1.05rem; }
+.resa-total span { color: var(--muted); font-size: .9rem; }
+.resa-error { background: #fee2e2; color: #b91c1c; padding: .7rem 1rem; border-radius: 10px; font-size: .9rem; }

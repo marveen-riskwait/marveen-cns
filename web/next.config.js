@@ -11,6 +11,8 @@ const nextConfig = {
   async rewrites() {
     return [
       { source: "/media/:path*", destination: `${API}/media/:path*` },
+      // Client-side calls (reservation form, payment) reach the API same-origin.
+      { source: "/api/:path*", destination: `${API}/api/:path*` },
     ];
   },
 };
