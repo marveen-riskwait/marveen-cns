@@ -61,6 +61,7 @@ pip install -r requirements.txt
 export FLASK_APP=wsgi.py APP_ENV=development
 flask db upgrade                          # applique les migrations
 flask seed                                # permissions, rôles, super-admin
+flask seed-demo                           # (optionnel) jeu de démo "RDV Cycles"
 python wsgi.py                            # API sur http://localhost:3001
 ```
 

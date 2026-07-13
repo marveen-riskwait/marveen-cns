@@ -87,3 +87,10 @@ def _register_cli(app: Flask) -> None:
     def seed():
         """Seed permissions, roles and the super-admin account."""
         seed_all()
+
+    @app.cli.command("seed-demo")
+    def seed_demo_cmd():
+        """Populate a demo "RDV Cycles" dataset (idempotent)."""
+        from app.seeds.demo import seed_demo
+        seed_demo()
+        print("Jeu de démonstration RDV Cycles chargé.")

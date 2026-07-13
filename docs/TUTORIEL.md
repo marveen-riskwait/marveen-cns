@@ -77,6 +77,11 @@ CMS_API_URL=http://localhost:3001 npm run dev   # http://localhost:3000
 ```
 
 > Raccourcis : `make install`, `make test`, `make up` (stack Docker complète).
+>
+> **Données de démo** : `flask seed-demo` (dans `backend/`, après `flask seed`)
+> remplit un site « RDV Cycles » complet — accueil + pages, blog, FAQ,
+> témoignages, menus, réglages et un type de contenu « Vélo » avec ses entrées.
+> Idempotent : rejouable sans risque.
 
 ---
 
