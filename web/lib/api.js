@@ -22,6 +22,8 @@ export const getPreview = (token) => get(`/preview?token=${encodeURIComponent(to
 export const getSettings = () => get(`/settings`);
 export const getMenu = (location) => get(`/menus/${location}`);
 
-// Absolute URL for media stored as a relative /media path.
-export const mediaUrl = (url) =>
-  !url ? "" : url.startsWith("http") ? url : `${BASE}${url}`;
+// Media URL for use in the browser. Relative `/media/...` paths are kept
+// same-origin (served by a Next rewrite → backend, see next.config.js), so the
+// browser never needs to reach the API host directly — which matters behind a
+// proxy or in Codespaces. Absolute URLs (external images) pass through.
+export const mediaUrl = (url) => url || "";
